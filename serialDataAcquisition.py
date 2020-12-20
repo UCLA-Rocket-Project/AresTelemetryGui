@@ -58,6 +58,15 @@ def plot_stop():
     global plot_data_flag
     plot_data_flag = False
 
+def plot_clear():
+    global data, t
+    data = np.array([])
+    t = np.array([])
+    lines.set_data(t, data)
+    fig.gca().relim()
+    fig.gca().autoscale_view()
+    canvas.draw()
+
 # GUI Main Code
 root = tk.Tk() # Create tkinter object
 root.title('Ares Telemetry GUI')
@@ -88,6 +97,10 @@ start.place(x = 100, y = 500) # Place button at (x,y)
 root.update()
 stop = tk.Button(root, text = "Stop Plot", font = ('calibri', 12), command = lambda: plot_stop())
 stop.place(x = start.winfo_x()+start.winfo_reqwidth() + 20, y = 500) # Place button right of start button
+
+root.update()
+clear = tk.Button(root, text = "Clear Plot", font = ('calibri', 12), command = lambda: plot_clear())
+clear.place(x = stop.winfo_x()+stop.winfo_reqwidth() + 20, y = 500)
 
 root.after(1,plot_data)
 root.mainloop()
