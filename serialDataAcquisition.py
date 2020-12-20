@@ -9,45 +9,52 @@ import matplotlib.pyplot as plt
 import serial as sr
 import numpy as np
 import math
-import time
+from datetime import datetime, timedelta
+from matplotlib.dates import DateFormatter
+
+plt.style.use('seaborn')
 
 # Global Variables
 data = np.array([]) # empty array
+t = np.array([])
 
 plot_data_flag = False
+
+startTime = datetime.now()
 
 # # Establish connection with Rasperry Pi over serial (UNFINISHED)
 # s = sr.Serial('COM8',9600) # Connect to serial port COM8 with baudrate 9600
 # s.reset_input_buffer() # Clear any data in buffer
 
 # # Data (UNFINISHED)
-# def plot_data():
-#     global plot_data_flag, data
+def plot_data():
+    global plot_data_flag, data, t, startTime
 
-#     if (plot_data_flag):
-#         a = s.readline() # Read line from serial
-#         a.decode()
+    if (plot_data_flag):
+        # a = s.readline() # Read line from serial
+        # a.decode()
+        
+        # For testing
+        a = np.random.rand()
 
-#         # Only plot 100 data elements at a time. I copied this from the tutorial, but I might change it so that the x axis moves with time
-#         if(len(data) < 100):
-#             data = np.append(data,float(a[0:4]))
-#         else:
-#             data[0:99] = data[1:100] # Shift data plot to left
-#             data[99] = float(a[0:4]) # Current data value
+        data = np.append(data, a)
 
-#         lines.set_xdata(np.arange(0,len(data)))
-#         lines.set_ydata(data)
+        t = np.append(t, datetime.now())
 
-#         canvas.draw()
+        lines.set_data(t, data)
+        fig.gca().relim()
+        fig.gca().autoscale_view()
+        canvas.draw()
 
-#     root.after(1,plot_data)
+    root.after(1,plot_data)
 
-def plot_start()
-    global plot_data_flag
+def plot_start():
+    global plot_data_flag, startTime
     plot_data_flag = True
-    s.reset_input_buffer()
+    startTime = datetime.now()
+    # s.reset_input_buffer()
 
-def plot_stop()
+def plot_stop():
     global plot_data_flag
     plot_data_flag = False
 
@@ -64,9 +71,10 @@ ax = fig.add_subplot(111)
 ax.set_title('Test Plot')
 ax.set_xlabel('Test x')
 ax.set_ylabel('Test y')
-ax.set_xlim(0,100)
-ax.set_ylim(0,10)
-lines = ax.plot([],[])[0]
+ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d %H:%M:%S')) 
+ax.fmt_xdata = DateFormatter('%Y-%m-%d %H:%M:%S') 
+fig.autofmt_xdate() 
+lines, = ax.plot_date([],[])
 
 canvas = FigureCanvasTkAgg(fig, master=root) # Create canvas figure object
 canvas.get_tk_widget().place(x = 10, y = 10, width = 600, height = 450) # Place figure at position (x,y) with size (width,height)
@@ -79,7 +87,7 @@ start.place(x = 100, y = 500) # Place button at (x,y)
 
 root.update()
 stop = tk.Button(root, text = "Stop Plot", font = ('calibri', 12), command = lambda: plot_stop())
-stop.place(x = start.winfo_x()+start.winfo_reqwidth() + 20, y = 450) # Place button right of start button
+stop.place(x = start.winfo_x()+start.winfo_reqwidth() + 20, y = 500) # Place button right of start button
 
 root.after(1,plot_data)
 root.mainloop()
