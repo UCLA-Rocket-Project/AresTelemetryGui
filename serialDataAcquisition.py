@@ -41,7 +41,12 @@ def plot_data():
 
         t = np.append(t, datetime.now())
 
-        lines.set_data(t, data)
+        startPoint = len(t) - 100
+
+        if startPoint < 0:
+            startPoint = 0
+
+        lines.set_data(t[startPoint:len(t)-1], data[startPoint:len(data)-1])
         fig.gca().relim()
         fig.gca().autoscale_view()
         canvas.draw()
@@ -80,7 +85,7 @@ ax = fig.add_subplot(111)
 ax.set_title('Test Plot')
 ax.set_xlabel('Test x')
 ax.set_ylabel('Test y')
-ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d %H:%M:%S')) 
+ax.xaxis.set_major_formatter(DateFormatter('%H:%M:%S')) 
 ax.fmt_xdata = DateFormatter('%Y-%m-%d %H:%M:%S') 
 fig.autofmt_xdate() 
 lines, = ax.plot_date([],[])
