@@ -74,6 +74,14 @@ def plot_data():
         # Plot everything
         lines.set_data(t[startPoint:endPoint], data[startPoint:endPoint])
         # lines.set_data(t, data)
+
+        # if len(data[startPoint:endPoint]) <=1:
+        #     fig1.gca().set_ylim(0, 1)
+        # else:
+        #     data_range = max(data[startPoint:endPoint]) - min(data[startPoint:endPoint])
+        #     bezel = data_range*0.05
+        #     fig1.gca().set_ylim(min(data[startPoint:endPoint]) - bezel, max(data[startPoint:endPoint]) + bezel)        
+        
         fig1.gca().relim()
         fig1.gca().set_xlim(now_t - timedelta(seconds = 10), now_t)
         fig1.gca().autoscale_view()
