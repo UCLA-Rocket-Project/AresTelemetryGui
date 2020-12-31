@@ -22,6 +22,8 @@ plot_data_flag = False
 
 startTime = datetime.now()
 
+zeroT = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+
 # # Establish connection with Rasperry Pi over serial (UNFINISHED)
 # s = sr.Serial('COM8',9600) # Connect to serial port COM8 with baudrate 9600
 # s.reset_input_buffer() # Clear any data in buffer
@@ -41,7 +43,11 @@ def plot_data():
 
         now_t = datetime.now()
 
-        t = np.append(t, now_t)
+        t_delta = now_t - startTime
+
+        rel_now_t = zeroT + t_delta
+
+        t = np.append(t, rel_now_t)
 
         startPoint = len(t) - 100
         endPoint = len(t)-1
@@ -54,7 +60,7 @@ def plot_data():
         # lines.set_data(t[startPoint:endPoint], data[startPoint:endPoint])
         lines.set_data(t, data)
         fig1.gca().relim()
-        fig1.gca().set_xlim(now_t - timedelta(seconds = 10), now_t)
+        fig1.gca().set_xlim(rel_now_t - timedelta(seconds = 10), rel_now_t)
         fig1.gca().autoscale_view()
         canvas.draw()
 
