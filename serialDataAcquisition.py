@@ -47,7 +47,7 @@ def plot_data():
 
         rel_now_t = zeroT + t_delta
 
-        t = np.append(t, rel_now_t)
+        t = np.append(t, now_t)
 
         startPoint = len(t) - 100
         endPoint = len(t)-1
@@ -60,7 +60,7 @@ def plot_data():
         # lines.set_data(t[startPoint:endPoint], data[startPoint:endPoint])
         lines.set_data(t, data)
         fig1.gca().relim()
-        fig1.gca().set_xlim(rel_now_t - timedelta(seconds = 10), rel_now_t)
+        fig1.gca().set_xlim(now_t - timedelta(seconds = 10), now_t)
         fig1.gca().autoscale_view()
         canvas.draw()
 
