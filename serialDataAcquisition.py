@@ -83,18 +83,21 @@ def plot_data():
 
 def plot_start():
     global plot_data_flag, startTime
-    plot_data_flag = True
-    startTime = datetime.now()
+    if ~plot_data_flag:
+        plot_data_flag = True
+        startTime = datetime.now()
     # s.reset_input_buffer()
 
 def plot_stop():
     global plot_data_flag
-    plot_data_flag = False
+    if plot_data_flag:
+        plot_data_flag = False
 
 def plot_clear():
-    global data, t
+    global data, t, startPoint
     data = np.array([])
     t = np.array([])
+    startPoint = 0
     lines.set_data(t, data)
     fig1.gca().relim()
     fig1.gca().autoscale_view()
