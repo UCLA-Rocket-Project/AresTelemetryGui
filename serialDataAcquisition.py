@@ -18,11 +18,13 @@ plt.style.use('seaborn')
 data = np.array([]) # empty array
 t = np.array([])
 
-plot_data_flag = False
+plot_data_flag = False # Flag that tells gui when to be plotting data
 
-startTime = datetime.now()
+startTime = datetime.now() # Time when start graph buttone is pressed
 
-zeroT = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+zeroT = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) # Used in calculation of relative time
+
+startPoint = 0 # index of when to start plotting data
 
 # # Establish connection with Rasperry Pi over serial (UNFINISHED)
 # s = sr.Serial('COM8',9600) # Connect to serial port COM8 with baudrate 9600
@@ -30,35 +32,48 @@ zeroT = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
 # # Data (UNFINISHED)
 def plot_data():
-    global plot_data_flag, data, t, startTime
+    global plot_data_flag, data, t, startTime, startPoint
 
     if (plot_data_flag):
         # a = s.readline() # Read line from serial
         # a.decode()
         
-        # For testing
+        # For testing generate random value
         a = np.random.rand()
 
-        data = np.append(data, a)
-
+        # get time that data was obtained
         now_t = datetime.now()
 
+        # Append value to data array
+        data = np.append(data, a)
+
+        # Get time delta since plotting began
         t_delta = now_t - startTime
 
+        # Relative time object for plotting (currently unused. If you want to see it used, replace all now_t with rel_now_t past this line)
         rel_now_t = zeroT + t_delta
 
+        # Appends current clock time to time array
         t = np.append(t, now_t)
 
-        startPoint = len(t) - 100
+        # Finds index of first element of time array with time delta less < 10 seconds
+        for i in range(len(t)):
+            temp_del = now_t-t[i]
+            if temp_del > timedelta(seconds = 10):
+                startPoint = i
+            if temp_del < timedelta(seconds = 10):
+                break
+
         endPoint = len(t)-1
 
-        # if startPoint < 0:
-        #     startPoint = 0
-        # if endPoint < 0:
-        #     endPoint = 0
+        if startPoint < 0:
+            startPoint = 0
+        if endPoint < 0:
+            endPoint = 0
 
-        # lines.set_data(t[startPoint:endPoint], data[startPoint:endPoint])
-        lines.set_data(t, data)
+        # Plot everything
+        lines.set_data(t[startPoint:endPoint], data[startPoint:endPoint])
+        # lines.set_data(t, data)
         fig1.gca().relim()
         fig1.gca().set_xlim(now_t - timedelta(seconds = 10), now_t)
         fig1.gca().autoscale_view()
