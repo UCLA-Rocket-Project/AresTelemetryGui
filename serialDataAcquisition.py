@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import serial as sr
 import numpy as np
 import math
+import pandas as pd
+
 from datetime import datetime, timedelta
 from matplotlib.dates import DateFormatter
 
@@ -111,6 +113,12 @@ def plot_clear():
     fig1.gca().autoscale_view()
     canvas.draw()
 
+def export_data():
+    global data, t
+    df = pd.DataFrame.from_dict({'Time':t,'Data':data})
+    df.to_excel('test.xlsx', header=True, index=False)
+    print("Data Exported to test.xlsx")
+
 # GUI Main Code
 root = tk.Tk() # Create tkinter object
 root.title('Ares Telemetry GUI')
@@ -161,6 +169,10 @@ stop.place(x = start.winfo_x()+start.winfo_reqwidth() + 20, y = 750) # Place but
 root.update()
 clear = tk.Button(root, text = "Clear Plot", font = ('calibri', 12), command = lambda: plot_clear())
 clear.place(x = stop.winfo_x()+stop.winfo_reqwidth() + 20, y = 750)
+
+root.update()
+export = tk.Button(root, text = "Manually Export Data to Excel Sheet", font = ('calibri', 12), command = lambda: export_data())
+export.place(x = clear.winfo_x()+stop.winfo_reqwidth() + 20, y = 750)
 
 root.after(1,plot_data)
 root.mainloop()
