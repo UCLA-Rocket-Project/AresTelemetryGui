@@ -22,9 +22,9 @@ t = np.array([])
 
 plot_data_flag = False # Flag that tells gui when to be plotting data
 
-startTime = datetime.now() # Time when start graph buttone is pressed
+# startTime = datetime.now() # Time when start graph buttone is pressed
 
-zeroT = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) # Used in calculation of relative time
+# zeroT = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) # Used in calculation of relative time
 
 startPoint = 0 # index of when to start plotting data
 
@@ -38,27 +38,27 @@ def plot_data():
 
     if (plot_data_flag):
         # a = s.readline() # Read line from serial
-        # a.decode()
+        # Data will probably be recieved in some csv format. Once this format is established, iterate each line and split the data using the established delimeters
         
-        # For testing generate random value
+        # For testing without rasperry pi generate random value
         a = np.random.rand()
 
         # get time that data was obtained
         now_t = datetime.now()
 
-        # Append value to data array
+        # Append value to data array (add more data arrays as needed in the case of other measurements)
         data = np.append(data, a)
 
         # Get time delta since plotting began
-        t_delta = now_t - startTime
+        # t_delta = now_t - startTime
 
         # Relative time object for plotting (currently unused. If you want to see it used, replace all now_t with rel_now_t past this line)
-        rel_now_t = zeroT + t_delta
+        # rel_now_t = zeroT + t_delta
 
         # Appends current clock time to time array
         t = np.append(t, now_t)
 
-        # Finds index of first element of time array with time delta less < 10 seconds
+        # Finds index of first element of time array with time delta less < 10 seconds (i.e. only the last 10 seconds of data will be plotted)
         for i in range(len(t)):
             temp_del = now_t-t[i]
             if temp_del > timedelta(seconds = 10):
@@ -73,10 +73,11 @@ def plot_data():
         if endPoint < 0:
             endPoint = 0
 
-        # Plot everything
+        # Plot data
         lines.set_data(t[startPoint:endPoint], data[startPoint:endPoint])
         # lines.set_data(t, data)
 
+        # Autoscale y range of data
         # if len(data[startPoint:endPoint]) <=1:
         #     fig1.gca().set_ylim(0, 1)
         # else:
@@ -84,6 +85,7 @@ def plot_data():
         #     bezel = data_range*0.05
         #     fig1.gca().set_ylim(min(data[startPoint:endPoint]) - bezel, max(data[startPoint:endPoint]) + bezel)        
         
+        # Scale axes
         fig1.gca().relim()
         fig1.gca().set_xlim(now_t - timedelta(seconds = 10), now_t)
         fig1.gca().autoscale_view()
@@ -91,6 +93,7 @@ def plot_data():
 
     root.after(1,plot_data)
 
+# Start plotting data if not already plotting
 def plot_start():
     global plot_data_flag, startTime
     if ~plot_data_flag:
@@ -98,11 +101,13 @@ def plot_start():
         startTime = datetime.now()
     # s.reset_input_buffer()
 
+# Stop plotting data if data is being plotted
 def plot_stop():
     global plot_data_flag
     if plot_data_flag:
         plot_data_flag = False
 
+# Clear existing data
 def plot_clear():
     global data, t, startPoint
     data = np.array([])
@@ -113,6 +118,7 @@ def plot_clear():
     fig1.gca().autoscale_view()
     canvas.draw()
 
+# Export data to excel sheet
 def export_data():
     global data, t
     df = pd.DataFrame.from_dict({'Time':t,'Data':data})
@@ -174,5 +180,6 @@ root.update()
 export = tk.Button(root, text = "Manually Export Data to Excel Sheet", font = ('calibri', 12), command = lambda: export_data())
 export.place(x = clear.winfo_x()+stop.winfo_reqwidth() + 20, y = 750)
 
+# Execute main GUI loop
 root.after(1,plot_data)
 root.mainloop()
