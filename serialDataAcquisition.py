@@ -19,12 +19,11 @@ plt.style.use('seaborn')
 # Global Variables
 data = np.array([]) # empty array
 t = np.array([])
+rel_t_array = np.array([])
 
 plot_data_flag = False # Flag that tells gui when to be plotting data
 
-# startTime = datetime.now() # Time when start graph buttone is pressed
-
-# zeroT = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) # Used in calculation of relative time
+zeroT = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) # Used in calculation of relative time
 
 startPoint = 0 # index of when to start plotting data
 
@@ -34,7 +33,7 @@ startPoint = 0 # index of when to start plotting data
 
 # # Data (UNFINISHED)
 def plot_data():
-    global plot_data_flag, data, t, startTime, startPoint
+    global plot_data_flag, data, t, startTime, startPoint, rel_t_array
 
     if (plot_data_flag):
         # a = s.readline() # Read line from serial
@@ -49,14 +48,16 @@ def plot_data():
         # Append value to data array (add more data arrays as needed in the case of other measurements)
         data = np.append(data, a)
 
-        # Get time delta since plotting began
-        # t_delta = now_t - startTime
-
-        # Relative time object for plotting (currently unused. If you want to see it used, replace all now_t with rel_now_t past this line)
-        # rel_now_t = zeroT + t_delta
-
         # Appends current clock time to time array
         t = np.append(t, now_t)
+
+        # Get time delta since plotting began
+        t_delta = now_t - t[0]
+
+        # Relative time object for plotting (currently unused. If you want to see it used, replace all now_t with rel_now_t past this line)
+        rel_now_t = zeroT + t_delta
+
+        rel_t_array = np.append(rel_t_array, rel_now_t)
 
         # Finds index of first element of time array with time delta less < 10 seconds (i.e. only the last 10 seconds of data will be plotted)
         for i in range(len(t)):
@@ -74,7 +75,7 @@ def plot_data():
             endPoint = 0
 
         # Plot data
-        lines.set_data(t[startPoint:endPoint], data[startPoint:endPoint])
+        lines.set_data(rel_t_array[startPoint:endPoint], data[startPoint:endPoint])
         # lines.set_data(t, data)
 
         # Autoscale y range of data
@@ -87,7 +88,7 @@ def plot_data():
         
         # Scale axes
         fig1.gca().relim()
-        fig1.gca().set_xlim(now_t - timedelta(seconds = 10), now_t)
+        fig1.gca().set_xlim(rel_now_t - timedelta(seconds = 10), rel_now_t)
         fig1.gca().autoscale_view()
         canvas.draw()
 
@@ -120,9 +121,9 @@ def plot_clear():
 
 # Export data to excel sheet
 def export_data():
-    global data, t
-    df = pd.DataFrame.from_dict({'Time':t,'Data':data})
-    df.to_excel('test.xlsx', header=True, index=False)
+    global data, t, rel_t_array
+    df = pd.DataFrame.from_dict({'Time':t,'Relative Time':rel_t_array,'Data':data})
+    df.to_excel(datetime.now().strftime("%d-%m-%Y_(%H;%M;%S)")+'.xlsx', header=True, index=False)
     print("Data Exported to test.xlsx")
 
 # GUI Main Code
@@ -139,7 +140,7 @@ ax1.set_title('Test Plot')
 ax1.set_xlabel('Test x')
 ax1.set_ylabel('Test y')
 ax1.xaxis.set_major_formatter(DateFormatter('%H:%M:%S')) 
-ax1.fmt_xdata = DateFormatter('%Y-%m-%d %H:%M:%S') 
+ax1.fmt_xdata = DateFormatter('%H:%M:%S') 
 fig1.autofmt_xdate() 
 lines, = ax1.plot_date([],[])
 
