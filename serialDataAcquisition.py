@@ -51,13 +51,8 @@ def plot_data():
         # Appends current clock time to time array
         t = np.append(t, now_t)
 
-        # Get time delta since plotting began
-        t_delta = now_t - t[0]
-
-        # Relative time object for plotting (currently unused. If you want to see it used, replace all now_t with rel_now_t past this line)
-        rel_now_t = zeroT + t_delta
-
-        rel_t_array = np.append(rel_t_array, rel_now_t)
+        # Gets the Relative time
+        rel_t_array = [zeroT + (x - t[0]) for x in t]
 
         # Finds index of first element of time array with time delta less < 10 seconds (i.e. only the last 10 seconds of data will be plotted)
         for i in range(len(t)):
@@ -76,21 +71,19 @@ def plot_data():
 
         # Plot data
         lines.set_data(rel_t_array[startPoint:endPoint], data[startPoint:endPoint])
-        # lines.set_data(t, data)
+        lines2.set_data(t[startPoint:endPoint], data[startPoint:endPoint])
 
-        # Autoscale y range of data
-        # if len(data[startPoint:endPoint]) <=1:
-        #     fig1.gca().set_ylim(0, 1)
-        # else:
-        #     data_range = max(data[startPoint:endPoint]) - min(data[startPoint:endPoint])
-        #     bezel = data_range*0.05
-        #     fig1.gca().set_ylim(min(data[startPoint:endPoint]) - bezel, max(data[startPoint:endPoint]) + bezel)        
-        
         # Scale axes
         fig1.gca().relim()
-        fig1.gca().set_xlim(rel_now_t - timedelta(seconds = 10), rel_now_t)
+        fig1.gca().set_xlim(rel_t_array[len(rel_t_array)-1] - timedelta(seconds = 10), rel_t_array[len(rel_t_array)-1])
         fig1.gca().autoscale_view()
+
+        fig2.gca().relim()
+        fig2.gca().set_xlim(t[len(t)-1] - timedelta(seconds = 10), t[len(t)-1])
+        fig2.gca().autoscale_view()
+    
         canvas.draw()
+        canvas2.draw()
 
     root.after(1,plot_data)
 
@@ -117,11 +110,19 @@ def plot_clear():
     lines.set_data(t, data)
     fig1.gca().relim()
     fig1.gca().autoscale_view()
+    
+    lines2.set_data(t, data)
+    fig2.gca().relim()
+    fig2.gca().autoscale_view()
+
     canvas.draw()
+    canvas2.draw()
 
 # Export data to excel sheet
 def export_data():
-    global data, t, rel_t_array
+    global data, t, rel_t_array, plot_data_flag
+    if plot_data_flag:
+        plot_data_flag = False
     df = pd.DataFrame.from_dict({'Time':t,'Relative Time':rel_t_array,'Data':data})
     df.to_excel(datetime.now().strftime("%d-%m-%Y_(%H;%M;%S)")+'.xlsx', header=True, index=False)
     print("Data Exported to test.xlsx")
@@ -148,21 +149,21 @@ canvas = FigureCanvasTkAgg(fig1, master=root) # Create canvas figure object
 canvas.get_tk_widget().place(x = 10, y = 10, width = 600, height = 400) # Place figure at position (x,y) with size (width,height)
 canvas.draw() # Draw the object
 
-# # Plot figure 2 data to GUI
-# fig2 = Figure()
-# ax2 = fig2.add_subplot(111)
+# Plot figure 2 data to GUI
+fig2 = Figure()
+ax2 = fig2.add_subplot(111)
 
-# ax2.set_title('Test Plot 2')
-# ax2.set_xlabel('Test x')
-# ax2.set_ylabel('Test y')
-# ax2.xaxis.set_major_formatter(DateFormatter('%H:%M:%S')) 
-# ax2.fmt_xdata = DateFormatter('%Y-%m-%d %H:%M:%S') 
-# fig2.autofmt_xdate() 
-# lines2, = ax2.plot_date([],[])
+ax2.set_title('Test Plot 2')
+ax2.set_xlabel('Test x')
+ax2.set_ylabel('Test y')
+ax2.xaxis.set_major_formatter(DateFormatter('%H:%M:%S')) 
+ax2.fmt_xdata = DateFormatter('%Y-%m-%d %H:%M:%S') 
+fig2.autofmt_xdate() 
+lines2, = ax2.plot_date([],[])
 
-# canvas = FigureCanvasTkAgg(fig2, master=root) # Create canvas figure object
-# canvas.get_tk_widget().place(x = 620, y = 10, width = 600, height = 400) # Place figure at position (x,y) with size (width,height)
-# canvas.draw() # Draw the object
+canvas2 = FigureCanvasTkAgg(fig2, master=root)
+canvas2.get_tk_widget().place(x = 620, y = 10, width = 600, height = 400) # Place figure at position (x,y) with size (width,height)
+canvas2.draw() # Draw the object
 
 # Add buttons to interface
 root.update(); # Update GUI
@@ -178,7 +179,7 @@ clear = tk.Button(root, text = "Clear Plot", font = ('calibri', 12), command = l
 clear.place(x = stop.winfo_x()+stop.winfo_reqwidth() + 20, y = 750)
 
 root.update()
-export = tk.Button(root, text = "Manually Export Data to Excel Sheet", font = ('calibri', 12), command = lambda: export_data())
+export = tk.Button(root, text = "Stop and Export Data", font = ('calibri', 12), command = lambda: export_data())
 export.place(x = clear.winfo_x()+stop.winfo_reqwidth() + 20, y = 750)
 
 # Execute main GUI loop
