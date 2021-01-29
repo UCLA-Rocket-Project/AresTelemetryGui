@@ -51,11 +51,8 @@ def plot_data():
         # Appends current clock time to time array
         t = np.append(t, now_t)
 
-        # Gets the Relative time
-        rel_t_array = [zeroT + (x - t[0]) for x in t]
-
         # Finds index of first element of time array with time delta less < 10 seconds (i.e. only the last 10 seconds of data will be plotted)
-        for i in range(len(t)):
+        for i in range(startPoint,len(t)):
             temp_del = now_t-t[i]
             if temp_del > timedelta(seconds = 10):
                 startPoint = i
@@ -69,17 +66,20 @@ def plot_data():
         if endPoint < 0:
             endPoint = 0
 
+        # Gets the Relative time
+        rel_t_array = [zeroT + (x - t[0]) for x in t]
+
         # Plot data
         lines.set_data(rel_t_array[startPoint:endPoint], data[startPoint:endPoint])
         lines2.set_data(t[startPoint:endPoint], data[startPoint:endPoint])
 
         # Scale axes
         fig1.gca().relim()
-        fig1.gca().set_xlim(rel_t_array[len(rel_t_array)-1] - timedelta(seconds = 10), rel_t_array[len(rel_t_array)-1])
+        fig1.gca().set_xlim(rel_t_array[endPoint] - timedelta(seconds = 10), rel_t_array[endPoint])
         fig1.gca().autoscale_view()
 
         fig2.gca().relim()
-        fig2.gca().set_xlim(t[len(t)-1] - timedelta(seconds = 10), t[len(t)-1])
+        fig2.gca().set_xlim(t[endPoint] - timedelta(seconds = 10), t[endPoint])
         fig2.gca().autoscale_view()
     
         canvas.draw()
