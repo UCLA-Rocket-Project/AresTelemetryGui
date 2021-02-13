@@ -96,7 +96,6 @@ def plot_data():
         fig2.gca().set_xlim(t[endPoint] - timedelta(seconds = 10), t[endPoint])
         fig2.gca().autoscale_view()
 
-
         canvas.draw()
         canvas2.draw()
 
@@ -132,15 +131,6 @@ def plot_clear():
 
     canvas.draw()
     canvas2.draw()
-
-# Export data to excel sheet
-def export_data():
-    global data, t, rel_t_array, plot_data_flag
-    if plot_data_flag:
-        plot_data_flag = False
-    df = pd.DataFrame.from_dict({'Time':t,'Relative Time':rel_t_array,'Data':data})
-    df.to_excel(datetime.now().strftime("%d-%m-%Y_(%H;%M;%S)")+'.xlsx', header=True, index=False)
-    print("Data Exported to test.xlsx")
 
 # GUI Main Code
 root = tk.Tk() # Create tkinter object
@@ -192,11 +182,6 @@ stop.place(x = start.winfo_x()+start.winfo_reqwidth() + 20, y = 750) # Place but
 root.update()
 clear = tk.Button(root, text = "Clear Plot", font = ('calibri', 12), command = lambda: plot_clear())
 clear.place(x = stop.winfo_x()+stop.winfo_reqwidth() + 20, y = 750)
-
-root.update()
-export = tk.Button(root, text = "Stop and Export Data", font = ('calibri', 12), command = lambda: export_data())
-export.place(x = clear.winfo_x()+stop.winfo_reqwidth() + 20, y = 750)
-
 
 with open(filename, 'w', newline='') as csv_file:
     csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
