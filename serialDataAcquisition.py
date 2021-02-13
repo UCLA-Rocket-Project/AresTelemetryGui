@@ -4,6 +4,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.animation import FuncAnimation
 
+import csv
 import tkinter as tk
 import matplotlib.pyplot as plt
 import serial as sr
@@ -19,31 +20,38 @@ plt.style.use('seaborn')
 # Global Variables
 data = np.array([]) # empty array
 t = np.array([])
-rel_t_array = np.array([])
+
+filename = datetime.now().strftime("%d-%m-%Y_(%H;%M;%S)")+'.csv'
 
 plot_data_flag = False # Flag that tells gui when to be plotting data
 
 zeroT = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) # Used in calculation of relative time
 
-startPoint = 0 # index of when to start plotting data
-
-# # Establish connection with Rasperry Pi over serial (UNFINISHED)
-# s = sr.Serial('COM8',9600) # Connect to serial port COM8 with baudrate 9600
-# s.reset_input_buffer() # Clear any data in buffer
+fieldnames = ["time", "data"]
 
 # # Data (UNFINISHED)
 def plot_data():
-    global plot_data_flag, data, t, startTime, startPoint, rel_t_array
+    global fieldnames, plot_data_flag, data, t, startTime, zeroT
 
     if (plot_data_flag):
-        # a = s.readline() # Read line from serial
-        # Data will probably be recieved in some csv format. Once this format is established, iterate each line and split the data using the established delimeters
-        
+        startPoint = 0 # index of when to start plotting data
+
         # For testing without rasperry pi generate random value
         a = np.random.rand()
 
         # get time that data was obtained
         now_t = datetime.now()
+        
+        with open(filename, 'a') as csv_file:
+            csv_writer = csv.DictWriter(csv_file,fieldnames=fieldnames)
+
+            info = {
+
+                "time": now_t,
+                "data": a
+            }
+
+            csv_writer.writerow(info)
 
         # Append value to data array (add more data arrays as needed in the case of other measurements)
         data = np.append(data, a)
@@ -66,22 +74,29 @@ def plot_data():
         if endPoint < 0:
             endPoint = 0
 
-        # Gets the Relative time
-        rel_t_array = [zeroT + (x - t[0]) for x in t]
+        t = t[startPoint:endPoint+1]
+        data = data[startPoint:endPoint+1]
 
-        # Plot data
-        lines.set_data(rel_t_array[startPoint:endPoint], data[startPoint:endPoint])
-        lines2.set_data(t[startPoint:endPoint], data[startPoint:endPoint])
+        lines.set_data(t, data)
+        lines2.set_data(t, data*-10)
+
+        endPoint = len(t)-1
+
+        if startPoint < 0:
+            startPoint = 0
+        if endPoint < 0:
+            endPoint = 0
 
         # Scale axes
         fig1.gca().relim()
-        fig1.gca().set_xlim(rel_t_array[endPoint] - timedelta(seconds = 10), rel_t_array[endPoint])
+        fig1.gca().set_xlim(t[endPoint] - timedelta(seconds = 10), t[endPoint])
         fig1.gca().autoscale_view()
 
         fig2.gca().relim()
         fig2.gca().set_xlim(t[endPoint] - timedelta(seconds = 10), t[endPoint])
         fig2.gca().autoscale_view()
-    
+
+
         canvas.draw()
         canvas2.draw()
 
@@ -181,6 +196,11 @@ clear.place(x = stop.winfo_x()+stop.winfo_reqwidth() + 20, y = 750)
 root.update()
 export = tk.Button(root, text = "Stop and Export Data", font = ('calibri', 12), command = lambda: export_data())
 export.place(x = clear.winfo_x()+stop.winfo_reqwidth() + 20, y = 750)
+
+
+with open(filename, 'w', newline='') as csv_file:
+    csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+    csv_writer.writeheader()
 
 # Execute main GUI loop
 root.after(1,plot_data)
