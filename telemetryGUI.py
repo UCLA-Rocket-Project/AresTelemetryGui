@@ -51,6 +51,12 @@ class chartsPage(Page):
         Page.__init__(self, *args, **kwargs)    
         self.chartFrame = tk.Frame(self)
         self.chartFrame.pack(side="top", fill="x", expand=False)
+        
+        self.chart1Frame = tk.Frame(self.chartFrame)
+        self.chart1Frame.pack(side="left",anchor=N, fill="x", expand=False)
+
+        self.chart2Frame = tk.Frame(self.chartFrame)
+        self.chart2Frame.pack(side="left",anchor=N, fill="x", expand=False)
 
         # Plot figure 1 data to GUI
         self.fig1 = Figure()
@@ -64,8 +70,8 @@ class chartsPage(Page):
         self.fig1.autofmt_xdate() 
         self.lines, = self.ax1.plot_date([],[],linestyle='solid',marker='o')
 
-        self.canvas = FigureCanvasTkAgg(self.fig1, master=self.chartFrame) # Create canvas figure object
-        self.canvas.get_tk_widget().pack(side="left",anchor=N) # Place figure at position (x,y) with size (width,height)
+        self.canvas = FigureCanvasTkAgg(self.fig1, master=self.chart1Frame) # Create canvas figure object
+        self.canvas.get_tk_widget().pack(side="top",anchor=W) # Place figure at position (x,y) with size (width,height)
         self.canvas.draw() # Draw the object
 
         # Plot figure 2 data to GUI
@@ -80,19 +86,30 @@ class chartsPage(Page):
         self.fig2.autofmt_xdate() 
         self.lines2, = self.ax2.plot_date([],[],linestyle='solid',marker='o')
 
-        self.canvas2 = FigureCanvasTkAgg(self.fig2, master=self.chartFrame)
-        self.canvas2.get_tk_widget().pack(side="left",anchor=N) # Place figure at position (x,y) with size (width,height)
+        self.canvas2 = FigureCanvasTkAgg(self.fig2, master=self.chart2Frame)
+        self.canvas2.get_tk_widget().pack(side="top",anchor=W) # Place figure at position (x,y) with size (width,height)
         self.canvas2.draw() # Draw the object
+
+        # self.toolbarFrame = tk.Frame(self)
+        # self.toolbarFrame.pack(side="top", fill="x", expand=False)
+
+        self.toolbar1 = NavigationToolbar2Tk(self.canvas, self.chart1Frame)
+        self.toolbar1.update()
+        self.toolbar1.pack(side="top",anchor=W,fill='x')
+
+        self.toolbar2 = NavigationToolbar2Tk(self.canvas2, self.chart2Frame)
+        self.toolbar2.update()
+        self.toolbar2.pack(side="top",anchor=W,fill='x')
 
         self.chartButtonframe = tk.Frame(self)
         self.chartButtonframe.pack(side="top", fill="x", expand=False)
         
         self.start = tk.Button(self.chartButtonframe, text = "Start Plot", font = ('calibri', 12), command = lambda: self.plot_start()) # Create button object that executes function plot_start()
-        self.start.pack(side="top",anchor=W)
+        self.start.pack(side="left",fill='x',expand=True,anchor=N)
         self.stop = tk.Button(self.chartButtonframe, text = "Stop Plot", font = ('calibri', 12), command = lambda: self.plot_stop())
-        self.stop.pack(side="top",anchor=W)
+        self.stop.pack(side="left",fill='x',expand=True,anchor=N)
         self.clear = tk.Button(self.chartButtonframe, text = "Clear Plot", font = ('calibri', 12), command = lambda: self.plot_clear())
-        self.clear.pack(side="top",anchor=W)
+        self.clear.pack(side="left",fill='x',expand=True,anchor=N)
 
     def plot_data(self):
         global fieldnames, plot_data_flag, data, t, y1, y2, startPoint
