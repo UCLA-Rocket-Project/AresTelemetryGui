@@ -1,7 +1,10 @@
+# ---------------------------------------------------------------------------#
+# Import libraries
+# ---------------------------------------------------------------------------#
 import csv
 import random
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 
 t = datetime.now()
 x_1 = 1000
@@ -32,4 +35,4 @@ while True:
         x_1 = x_1 + random.randint(-6, 8)
         x_2 = x_2 + random.randint(-5, 6)
 
-    time.sleep(0.5)
+    time.sleep(0.25)

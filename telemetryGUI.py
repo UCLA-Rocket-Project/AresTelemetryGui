@@ -1,6 +1,6 @@
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.animation import FuncAnimation
+# ---------------------------------------------------------------------------#
+# Import libraries
+# ---------------------------------------------------------------------------#
 
 import csv
 import tkinter as tk
@@ -12,142 +12,215 @@ import pandas as pd
 
 from datetime import datetime, timedelta
 from matplotlib.dates import DateFormatter
+from tkinter import *
+from PIL import ImageTk, Image
+from matplotlib.backend_bases import key_press_handler
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import (
+    FigureCanvasTkAgg, NavigationToolbar2Tk)
+from matplotlib.animation import FuncAnimation
 
 plt.style.use('seaborn')
 
-# Global Variables
+# ---------------------------------------------------------------------------#
+# Global variables
+# ---------------------------------------------------------------------------#
+
 data = np.array([]) # empty array
 t = np.array([])
+y1 = np.array([])
+y2 = np.array([])
 
 plot_data_flag = False # Flag that tells gui when to be plotting data
 
 startPoint = 0
 
-# # Data (UNFINISHED)
-def plot_data():
-    global fieldnames, plot_data_flag, data, t, startPoint
 
-    if (plot_data_flag):
-        now_t = datetime.now()
+# ---------------------------------------------------------------------------#
+# Pages
+# ---------------------------------------------------------------------------#
+class Page(tk.Frame):
+    def __init__(self, *args, **kwargs):
+        tk.Frame.__init__(self, *args, **kwargs)
+    def show(self):
+        self.lift()
 
-        # Read in data from csv file
-        if startPoint != 0:
-            data = pd.read_csv('data.csv', skiprows = range(1,startPoint))
-        else:
-            data = pd.read_csv('data.csv')        
+#Page with charts
+class chartsPage(Page):
+    def __init__(self, *args, **kwargs):
+        Page.__init__(self, *args, **kwargs)    
+        self.chartFrame = tk.Frame(self)
+        self.chartFrame.pack(side="top", fill="x", expand=False)
 
-        # Appends current clock time to time array
-        t = pd.to_datetime(data['datetime'], format='%Y-%m-%d %H:%M:%S.%f', errors='ignore')
-        y1 = data['x_1']
-        y2 = data['x_2']
+        # Plot figure 1 data to GUI
+        self.fig1 = Figure()
+        self.ax1 = self.fig1.add_subplot(111)
 
-        # Finds index of first element of time array with time delta less < 10 seconds (i.e. only the last 10 seconds of data will be plotted)
-        for i in range(0,len(t)):
-            temp_del = now_t-t[i]
-            if temp_del > timedelta(seconds = 10):
-                startPoint += i
-            if temp_del < timedelta(seconds = 10):
-                break
+        self.ax1.set_title('Test Plot')
+        self.ax1.set_xlabel('Test x')
+        self.ax1.set_ylabel('Test y')
+        self.ax1.xaxis.set_major_formatter(DateFormatter('%H:%M:%S')) 
+        self.ax1.fmt_xdata = DateFormatter('%H:%M:%S') 
+        self.fig1.autofmt_xdate() 
+        self.lines, = self.ax1.plot_date([],[],linestyle='solid',marker='o')
 
-        lines.set_data(t, y1)
-        lines2.set_data(t, y2)
+        self.canvas = FigureCanvasTkAgg(self.fig1, master=self.chartFrame) # Create canvas figure object
+        self.canvas.get_tk_widget().pack(side="left",anchor=N) # Place figure at position (x,y) with size (width,height)
+        self.canvas.draw() # Draw the object
 
-        # Scale axes
-        fig1.gca().relim()
-        fig1.gca().set_xlim(now_t - timedelta(seconds = 10), now_t)
-        fig1.gca().autoscale_view()
+        # Plot figure 2 data to GUI
+        self.fig2 = Figure()
+        self.ax2 = self.fig2.add_subplot(111)
 
-        fig2.gca().relim()
-        fig2.gca().set_xlim(now_t - timedelta(seconds = 10), now_t)
-        fig2.gca().autoscale_view()
+        self.ax2.set_title('Test Plot 2')
+        self.ax2.set_xlabel('Test x')
+        self.ax2.set_ylabel('Test y')
+        self.ax2.xaxis.set_major_formatter(DateFormatter('%H:%M:%S')) 
+        self.ax2.fmt_xdata = DateFormatter('%Y-%m-%d %H:%M:%S') 
+        self.fig2.autofmt_xdate() 
+        self.lines2, = self.ax2.plot_date([],[],linestyle='solid',marker='o')
 
-        canvas.draw()
-        canvas2.draw()
+        self.canvas2 = FigureCanvasTkAgg(self.fig2, master=self.chartFrame)
+        self.canvas2.get_tk_widget().pack(side="left",anchor=N) # Place figure at position (x,y) with size (width,height)
+        self.canvas2.draw() # Draw the object
 
-    root.after(1,plot_data)
+        self.chartButtonframe = tk.Frame(self)
+        self.chartButtonframe.pack(side="top", fill="x", expand=False)
+        
+        self.start = tk.Button(self.chartButtonframe, text = "Start Plot", font = ('calibri', 12), command = lambda: self.plot_start()) # Create button object that executes function plot_start()
+        self.start.pack(side="top",anchor=W)
+        self.stop = tk.Button(self.chartButtonframe, text = "Stop Plot", font = ('calibri', 12), command = lambda: self.plot_stop())
+        self.stop.pack(side="top",anchor=W)
+        self.clear = tk.Button(self.chartButtonframe, text = "Clear Plot", font = ('calibri', 12), command = lambda: self.plot_clear())
+        self.clear.pack(side="top",anchor=W)
 
-# Start plotting data if not already plotting
-def plot_start():
-    global plot_data_flag, startPoint
-    if ~plot_data_flag:
-        plot_data_flag = True
-        startPoint = 0
-    # s.reset_input_buffer()
+    def plot_data(self):
+        global fieldnames, plot_data_flag, data, t, y1, y2, startPoint
 
-# Stop plotting data if data is being plotted
-def plot_stop():
-    global plot_data_flag
-    if plot_data_flag:
-        plot_data_flag = False
+        if (plot_data_flag):
+            now_t = datetime.now()
 
-# Clear existing data
-def plot_clear():
-    global data, t
-    data = np.array([])
-    t = np.array([])
+            # Read in data from csv file
+            try:
+                if startPoint != 0:
+                    data = pd.read_csv('data.csv', skiprows = range(1,startPoint))
+                else:
+                    data = pd.read_csv('data.csv')      
+            except:
+                plot_data_flag = False
+                print("No data availiable to plot")
+                return
 
-    lines.set_data(t, data)
-    fig1.gca().relim()
-    fig1.gca().autoscale_view()
-    
-    lines2.set_data(t, data)
-    fig2.gca().relim()
-    fig2.gca().autoscale_view()
+            # Appends current clock time to time array
+            t = pd.to_datetime(data['datetime'], format='%Y-%m-%d %H:%M:%S.%f', errors='ignore')
+            y1 = data['x_1']
+            y2 = data['x_2']
 
-    canvas.draw()
-    canvas2.draw()
+            # Finds index of first element of time array with time delta less < 10 seconds (i.e. only the last 10 seconds of data will be plotted)
+            for i in range(0,len(t)):
+                temp_del = now_t-t[i]
+                if temp_del < timedelta(seconds = 10):
+                    startPoint += i
+                    break
 
-# GUI Main Code
-root = tk.Tk() # Create tkinter object
-root.title('Ares Telemetry GUI')
-root.config(background = 'light blue') # Configure tkinter settings
-root.geometry("1920x1080") # Set window resolution
+            self.lines.set_data(t, y1)
+            self.lines2.set_data(t, y2)
 
-# Plot figure 1 data to GUI
-fig1 = Figure()
-ax1 = fig1.add_subplot(111)
+            # Scale axes
+            self.fig1.gca().relim()
+            self.fig1.gca().set_xlim(now_t - timedelta(seconds = 10), now_t)
+            self.fig1.gca().autoscale_view()
 
-ax1.set_title('Test Plot')
-ax1.set_xlabel('Test x')
-ax1.set_ylabel('Test y')
-ax1.xaxis.set_major_formatter(DateFormatter('%H:%M:%S')) 
-ax1.fmt_xdata = DateFormatter('%H:%M:%S') 
-fig1.autofmt_xdate() 
-lines, = ax1.plot_date([],[],linestyle='solid',marker='o')
+            self.fig2.gca().relim()
+            self.fig2.gca().set_xlim(now_t - timedelta(seconds = 10), now_t)
+            self.fig2.gca().autoscale_view()
 
-canvas = FigureCanvasTkAgg(fig1, master=root) # Create canvas figure object
-canvas.get_tk_widget().place(x = 10, y = 10, width = 600, height = 400) # Place figure at position (x,y) with size (width,height)
-canvas.draw() # Draw the object
+            self.canvas.draw()
+            self.canvas2.draw()
 
-# Plot figure 2 data to GUI
-fig2 = Figure()
-ax2 = fig2.add_subplot(111)
+    # Start plotting data if not already plotting
+    def plot_start(self):
+        global plot_data_flag, startPoint
+        if ~plot_data_flag:
+            plot_data_flag = True
 
-ax2.set_title('Test Plot 2')
-ax2.set_xlabel('Test x')
-ax2.set_ylabel('Test y')
-ax2.xaxis.set_major_formatter(DateFormatter('%H:%M:%S')) 
-ax2.fmt_xdata = DateFormatter('%Y-%m-%d %H:%M:%S') 
-fig2.autofmt_xdate() 
-lines2, = ax2.plot_date([],[],linestyle='solid',marker='o')
+    # Stop plotting data if data is being plotted
+    def plot_stop(self):
+        global plot_data_flag
+        if plot_data_flag:
+            plot_data_flag = False
 
-canvas2 = FigureCanvasTkAgg(fig2, master=root)
-canvas2.get_tk_widget().place(x = 620, y = 10, width = 600, height = 400) # Place figure at position (x,y) with size (width,height)
-canvas2.draw() # Draw the object
+    # Clear existing data
+    def plot_clear(self):
+        global data, t
+        data = np.array([])
+        t = np.array([])
 
-# Add buttons to interface
-root.update(); # Update GUI
-start = tk.Button(root, text = "Start Plot", font = ('calibri', 12), command = lambda: plot_start()) # Create button object that executes function plot_start()
-start.place(x = 100, y = 750) # Place button at (x,y)
+        self.lines.set_data(t, data)
+        self.fig1.gca().relim()
+        self.fig1.gca().autoscale_view()
+        
+        self.lines2.set_data(t, data)
+        self.fig2.gca().relim()
+        self.fig2.gca().autoscale_view()
 
-root.update()
-stop = tk.Button(root, text = "Stop Plot", font = ('calibri', 12), command = lambda: plot_stop())
-stop.place(x = start.winfo_x()+start.winfo_reqwidth() + 20, y = 750) # Place button right of start button
+        self.canvas.draw()
+        self.canvas2.draw()
 
-root.update()
-clear = tk.Button(root, text = "Clear Plot", font = ('calibri', 12), command = lambda: plot_clear())
-clear.place(x = stop.winfo_x()+stop.winfo_reqwidth() + 20, y = 750)
+#Info Page
+class infoPage(Page):
+    def __init__(self, *args, **kwargs):
+        Page.__init__(self, *args, **kwargs)
 
-# Execute main GUI loop
-root.after(1,plot_data)
-root.mainloop()
+class MainView(tk.Frame):
+    def __init__(self, *args, **kwargs):
+        tk.Frame.__init__(self, *args, **kwargs)
+
+        self.charts = chartsPage(self)
+        info = infoPage(self)
+
+        buttonframe = tk.Frame(self)
+        buttonframe.pack(side="top", fill="x", expand=False)
+        container = tk.Frame(self)
+        container.pack(side="top", fill="both", expand=True)
+
+        #placing charts page
+        self.charts.place(in_=container, x=0, y=0, relwidth=1, relheight=1)
+        info.place(in_=container, x=0, y=0, relwidth=1, relheight=1)  
+
+        #charts button
+        self.chartsImageObj = Image.open("./pics/charts.png")
+        self.chartsImage = ImageTk.PhotoImage(self.chartsImageObj)
+        chartsButton = tk.Button(buttonframe, image=self.chartsImage,
+            text="Charts", command=self.charts.lift)        
+
+        self.infoImageObj = Image.open("./pics/help.png")
+        self.infoImage = ImageTk.PhotoImage(self.infoImageObj)
+        infoButton = tk.Button(buttonframe, image=self.infoImage,
+            text="Info", command=info.lift)
+
+        chartsButton.pack(side="left", fill="both",expand=True)
+        infoButton.pack(side="left",fill="both",expand=True)
+
+        self.charts.show()
+        self.fEmbeddedCall()
+
+    def fEmbeddedCall(self):
+        self.charts.plot_data()
+        self.after(1,self.fEmbeddedCall)
+
+# ---------------------------------------------------------------------------#
+# Initialization of GUI and plots
+# ---------------------------------------------------------------------------#
+if __name__ == "__main__":
+    # GUI Main Code
+    root = tk.Tk() # Create tkinter object
+    main = MainView(root)
+    main.pack(side="top", fill="both", expand=True)
+    root.title('Ares Telemetry GUI')
+    root.config(background = 'light blue') # Configure tkinter settings
+    root.geometry("1920x1080") # Set window resolution
+
+    # Execute main GUI loop
+    # root.after(1,plot_data)
+    root.mainloop()
