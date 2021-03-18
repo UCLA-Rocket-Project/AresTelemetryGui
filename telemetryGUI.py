@@ -238,6 +238,4 @@ if __name__ == "__main__":
     root.config(background = 'light blue') # Configure tkinter settings
     root.geometry("1920x1080") # Set window resolution
 
-    # Execute main GUI loop
-    # root.after(1,plot_data)
     root.mainloop()
